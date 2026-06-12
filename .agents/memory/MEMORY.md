@@ -1,0 +1,2 @@
+- [StyleSheet.create pitfall](stylesheet-create-pitfall.md) — Never put non-style values (strings, hex colors) inside StyleSheet.create; causes "Invalid value used as weak map key" crash.
+- [BusTrack mobile structure](bustrack-mobile.md) — Expo app in artifacts/bus-tracker-mobile; design tokens from web, 4 tabs, API via @workspace/api-client-react.

@@ -1,0 +1,425 @@
+openapi: 3.1.0
+info:
+  title: Api
+  version: 0.1.0
+  description: BusTrack API — Rural Bus Booking & Live Tracking
+servers:
+  - url: /api
+    description: Base API path
+tags:
+  - name: health
+    description: Health operations
+  - name: buses
+    description: Bus management
+  - name: bookings
+    description: Seat bookings
+  - name: tracking
+    description: Live bus tracking
+
+paths:
+  /healthz:
+    get:
+      operationId: healthCheck
+      tags: [health]
+      summary: Health check
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+
+  /buses:
+    get:
+      operationId: listBuses
+      tags: [buses]
+      summary: List all buses
+      parameters:
+        - name: from
+          in: query
+          schema:
+            type: string
+        - name: to
+          in: query
+          schema:
+            type: string
+        - name: date
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of buses
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Bus"
+
+  /buses/{id}:
+    get:
+      operationId: getBus
+      tags: [buses]
+      summary: Get a bus by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Bus details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BusDetail"
+        "404":
+          description: Bus not found
+
+  /buses/{id}/seats:
+    get:
+      operationId: getBusSeats
+      tags: [buses]
+      summary: Get seat availability for a bus
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Seat layout
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Seat"
+
+  /buses/track/{busNumber}:
+    get:
+      operationId: trackBus
+      tags: [tracking]
+      summary: Get live tracking info by bus number
+      parameters:
+        - name: busNumber
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Live tracking data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TrackingInfo"
+        "404":
+          description: Bus not found
+
+  /buses/summary:
+    get:
+      operationId: getBusSummary
+      tags: [buses]
+      summary: Get summary stats for the dashboard
+      responses:
+        "200":
+          description: Summary stats
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BusSummary"
+
+  /bookings:
+    post:
+      operationId: createBooking
+      tags: [bookings]
+      summary: Book a seat
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BookingInput"
+      responses:
+        "201":
+          description: Booking created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Booking"
+        "400":
+          description: Seat already booked or invalid data
+        "404":
+          description: Bus or seat not found
+
+  /bookings/{id}:
+    get:
+      operationId: getBooking
+      tags: [bookings]
+      summary: Get booking by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Booking details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Booking"
+        "404":
+          description: Booking not found
+    delete:
+      operationId: cancelBooking
+      tags: [bookings]
+      summary: Cancel a booking
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Booking cancelled
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Booking"
+        "404":
+          description: Booking not found
+
+  /bookings/phone/{phone}:
+    get:
+      operationId: getBookingsByPhone
+      tags: [bookings]
+      summary: Get all bookings by phone number
+      parameters:
+        - name: phone
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of bookings
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Booking"
+
+components:
+  schemas:
+    HealthStatus:
+      type: object
+      required: [status]
+      properties:
+        status:
+          type: string
+
+    Stop:
+      type: object
+      required: [id, name, order, estimatedMinutes]
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        order:
+          type: integer
+        estimatedMinutes:
+          type: integer
+        distanceKm:
+          type: number
+
+    Bus:
+      type: object
+      required: [id, busNumber, routeName, from, to, departureTime, totalSeats, availableSeats, fare, status]
+      properties:
+        id:
+          type: integer
+        busNumber:
+          type: string
+        routeName:
+          type: string
+        from:
+          type: string
+        to:
+          type: string
+        departureTime:
+          type: string
+        arrivalTime:
+          type: string
+        totalSeats:
+          type: integer
+        availableSeats:
+          type: integer
+        fare:
+          type: number
+        status:
+          type: string
+          enum: [scheduled, running, completed, cancelled]
+
+    BusDetail:
+      type: object
+      required: [id, busNumber, routeName, from, to, departureTime, totalSeats, availableSeats, fare, status, stops]
+      properties:
+        id:
+          type: integer
+        busNumber:
+          type: string
+        routeName:
+          type: string
+        from:
+          type: string
+        to:
+          type: string
+        departureTime:
+          type: string
+        arrivalTime:
+          type: string
+        totalSeats:
+          type: integer
+        availableSeats:
+          type: integer
+        fare:
+          type: number
+        status:
+          type: string
+          enum: [scheduled, running, completed, cancelled]
+        stops:
+          type: array
+          items:
+            $ref: "#/components/schemas/Stop"
+
+    Seat:
+      type: object
+      required: [id, seatNumber, row, col, type, status]
+      properties:
+        id:
+          type: integer
+        seatNumber:
+          type: string
+        row:
+          type: integer
+        col:
+          type: integer
+        type:
+          type: string
+          enum: [window, aisle, middle]
+        status:
+          type: string
+          enum: [available, booked, reserved]
+
+    TrackingInfo:
+      type: object
+      required: [busId, busNumber, routeName, from, to, status, currentStop, nextStop, progressPercent, lastUpdated]
+      properties:
+        busId:
+          type: integer
+        busNumber:
+          type: string
+        routeName:
+          type: string
+        from:
+          type: string
+        to:
+          type: string
+        status:
+          type: string
+          enum: [scheduled, running, completed, cancelled]
+        currentStop:
+          $ref: "#/components/schemas/Stop"
+        nextStop:
+          type: ["object", "null"]
+          properties:
+            id:
+              type: integer
+            name:
+              type: string
+            order:
+              type: integer
+            estimatedMinutes:
+              type: integer
+            distanceKm:
+              type: number
+        etaMinutes:
+          type: ["integer", "null"]
+        progressPercent:
+          type: number
+        lastUpdated:
+          type: string
+
+    BusSummary:
+      type: object
+      required: [totalBuses, runningNow, scheduledToday, totalBookingsToday, availableSeatsTotal]
+      properties:
+        totalBuses:
+          type: integer
+        runningNow:
+          type: integer
+        scheduledToday:
+          type: integer
+        totalBookingsToday:
+          type: integer
+        availableSeatsTotal:
+          type: integer
+
+    BookingInput:
+      type: object
+      required: [busId, seatId, passengerName, phone, journeyDate]
+      properties:
+        busId:
+          type: integer
+        seatId:
+          type: integer
+        passengerName:
+          type: string
+        phone:
+          type: string
+        journeyDate:
+          type: string
+        boardingStop:
+          type: ["string", "null"]
+        dropStop:
+          type: ["string", "null"]
+
+    Booking:
+      type: object
+      required: [id, busId, seatId, passengerName, phone, journeyDate, status, createdAt, bus, seat]
+      properties:
+        id:
+          type: integer
+        busId:
+          type: integer
+        seatId:
+          type: integer
+        passengerName:
+          type: string
+        phone:
+          type: string
+        journeyDate:
+          type: string
+        boardingStop:
+          type: ["string", "null"]
+        dropStop:
+          type: ["string", "null"]
+        status:
+          type: string
+          enum: [confirmed, cancelled]
+        createdAt:
+          type: string
+        bus:
+          $ref: "#/components/schemas/Bus"
+        seat:
+          $ref: "#/components/schemas/Seat"

@@ -1,0 +1,8 @@
+uploads = []
+outputs = []
+
+[[generated]]
+id = "9xi7BQUFp4mkA_JO6vwWH"
+uri = "file://artifacts/bus-tracker-mobile/assets/images/icon.png"
+type = "image"
+title = "generated_image"
