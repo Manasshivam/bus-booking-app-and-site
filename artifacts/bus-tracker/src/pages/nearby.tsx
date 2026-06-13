@@ -37,12 +37,14 @@ async function reverseGeocode(lat: number, lon: number): Promise<string> {
   );
 }
 
+type BusItem = NonNullable<ReturnType<typeof useListBuses>["data"]>[number];
+
 function BusResultCard({
   bus,
   onTrack,
   onBook,
 }: {
-  bus: ReturnType<typeof useListBuses>["data"] extends Array<infer T> ? T : never;
+  bus: BusItem;
   onTrack: () => void;
   onBook: () => void;
 }) {
