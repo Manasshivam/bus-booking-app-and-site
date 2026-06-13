@@ -15,11 +15,29 @@ import Animated, {
   useAnimatedStyle,
   useSharedValue,
   withSpring,
-  withTiming,
-  useEffect as useReanimatedEffect,
 } from "react-native-reanimated";
 import { useTrackBus } from "@workspace/api-client-react";
 import { useColors } from "@/hooks/useColors";
+
+type TrackingStop = {
+  id: number;
+  name: string;
+  order: number;
+  estimatedMinutes: number;
+};
+
+type TrackingData = {
+  busNumber: string;
+  routeName: string;
+  from: string;
+  to: string;
+  status: string;
+  progressPercent: number;
+  lastUpdated: string;
+  etaMinutes?: number | null;
+  currentStop?: TrackingStop;
+  nextStop?: TrackingStop;
+};
 
 export default function TrackingScreen() {
   const colors = useColors();
@@ -29,7 +47,7 @@ export default function TrackingScreen() {
 
   const bottomPadding = isWeb ? 34 : insets.bottom;
 
-  const { data: tracking, isLoading, error, dataUpdatedAt } = useTrackBus(
+  const { data: tracking, isLoading, error } = useTrackBus(
     busNumber ?? "",
     {
       query: {
@@ -37,7 +55,7 @@ export default function TrackingScreen() {
         refetchInterval: 30000,
       },
     }
-  );
+  ) as { data: TrackingData | undefined; isLoading: boolean; error: unknown; dataUpdatedAt: number };
 
   const progressWidth = useSharedValue(0);
 
@@ -380,24 +398,14 @@ function formatMinutes(mins: number): string {
   return `${m}m`;
 }
 
-function buildStopsList(tracking: NonNullable<ReturnType<typeof useTrackBus>["data"]>) {
+function buildStopsList(tracking: TrackingData): TrackingStop[] {
   if (!tracking) return [];
-  const stops: Array<{ id: number; name: string; order: number; estimatedMinutes: number }> = [];
+  const stops: TrackingStop[] = [];
   if (tracking.currentStop) {
-    stops.push({
-      id: tracking.currentStop.id,
-      name: tracking.currentStop.name,
-      order: tracking.currentStop.order,
-      estimatedMinutes: tracking.currentStop.estimatedMinutes,
-    });
+    stops.push(tracking.currentStop);
   }
   if (tracking.nextStop) {
-    stops.push({
-      id: tracking.nextStop.id,
-      name: tracking.nextStop.name,
-      order: tracking.nextStop.order,
-      estimatedMinutes: tracking.nextStop.estimatedMinutes,
-    });
+    stops.push(tracking.nextStop);
   }
   return stops;
 }
